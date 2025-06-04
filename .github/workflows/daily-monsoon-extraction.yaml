@@ -51,12 +51,34 @@ jobs:
     - name: Install Python dependencies
       run: |
         python -m pip install --upgrade pip
-        # Install pygooglenews without dependencies first
-        pip install pygooglenews==0.1.2 --no-deps --no-input
-        # Force install feedparser 6.0.0 (overrides pygooglenews constraint)
-        pip install feedparser==6.0.0
-        # Install everything else from requirements.txt
-        pip install -r requirements.txt
+        
+        # Install core packages first
+        pip install beautifulsoup4==4.9.1
+        pip install requests==2.24.0
+        pip install dateparser==0.7.6
+        pip install pandas==2.1.4
+        pip install lxml==5.3.2
+        pip install lxml_html_clean==0.4.1
+        pip install psutil==5.9.5
+        pip install selenium==4.10.0
+        pip install trafilatura==2.0.0
+        pip install webdriver-manager==4.0.0
+        
+        # Install playwright separately 
+        pip install playwright==1.51.0
+        
+        # Handle the problematic packages separately
+        # Install pygooglenews without dependencies
+        pip install pygooglenews==0.1.2 --no-deps
+        
+        # Install feedparser (this will override any conflicts)
+        pip install feedparser==6.0.0 --force-reinstall
+        
+        # Install newspaper3k without dependencies to avoid feedparser conflict
+        pip install newspaper3k==0.2.8 --no-deps
+        
+        # Install newspaper3k's other dependencies manually
+        pip install Pillow PyYAML cssselect nltk tldextract feedfinder2 jieba3k tinysegmenter
         
     - name: Install Playwright browsers (if needed)
       run: |
