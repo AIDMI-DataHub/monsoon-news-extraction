@@ -50,6 +50,10 @@ jobs:
         pip install psutil==5.9.5
         pip install trafilatura==2.0.0
         
+        # Install selenium and webdriver-manager (but no browser setup)
+        pip install selenium==4.10.0
+        pip install webdriver-manager==4.0.0
+        
         # Handle the problematic packages separately
         # Install pygooglenews without dependencies
         pip install pygooglenews==0.1.2 --no-deps
@@ -63,7 +67,7 @@ jobs:
         # Install newspaper3k's other dependencies manually
         pip install Pillow PyYAML cssselect nltk tldextract feedfinder2 jieba3k tinysegmenter
         
-        echo "Skipping selenium/playwright for faster execution"
+        echo "Installed selenium but skipping browser setup - will use fallback methods"
         
     - name: Create data directories
       run: |
