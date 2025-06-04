@@ -14,8 +14,7 @@ playwright>=1.40.0
 trafilatura>=1.6.0
 psutil>=5.9.0
 
-# Data processing
-hashlib2>=1.0.1
-
 # System dependencies (automatically installed on most systems)
 urllib3>=1.26.0
+
+# Note: hashlib is built into Python, no need to install separately
