@@ -63,7 +63,6 @@ jobs:
         # Install newspaper3k's other dependencies manually
         pip install Pillow PyYAML cssselect nltk tldextract feedfinder2 jieba3k tinysegmenter
         
-        # Only install browser dependencies if extraction fails with basic methods
         echo "Skipping selenium/playwright for faster execution"
         
     - name: Create data directories
