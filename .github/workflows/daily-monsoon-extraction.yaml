@@ -51,7 +51,11 @@ jobs:
     - name: Install Python dependencies
       run: |
         python -m pip install --upgrade pip
-        # Install all dependencies from requirements.txt
+        # Install pygooglenews without dependencies first
+        pip install pygooglenews==0.1.2 --no-deps --no-input
+        # Force install feedparser 6.0.0 (overrides pygooglenews constraint)
+        pip install feedparser==6.0.0
+        # Install everything else from requirements.txt
         pip install -r requirements.txt
         
     - name: Install Playwright browsers (if needed)
