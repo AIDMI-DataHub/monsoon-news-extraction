@@ -10,16 +10,22 @@ import requests
 from bs4 import BeautifulSoup
 from language_map import get_language_for_region, get_all_languages_for_region, get_climate_impact_terms
 
+# Import our smart handler
+from smart_google_news_handler import smart_handler
+
 def run_monsoon_script(target_date=None, days_back=0, single_state=None):
     """
     Run the monsoon script with STRICT date filtering for specified date range,
     with improved multilingual support and enhanced content validation.
+    Enhanced with smart Google News handling to avoid rate limits.
     
     Args:
         target_date (str): Date in YYYY-MM-DD format, if None uses current date
         days_back (int): Number of days to look back from target_date (0 = target date only)
         single_state (str): If provided, only process this single state/UT
     """
+    print("🧠 Initializing Smart Google News Handler...")
+    
     # Set date range based on parameters
     ist = pytz.timezone('Asia/Kolkata')
     
@@ -85,7 +91,14 @@ def run_monsoon_script(target_date=None, days_back=0, single_state=None):
         if national_entries:
             save_national_results(national_entries, end_date)
 
-    # Process each region
+    # Print smart handler initialization stats
+    print("🧠 Smart Handler Status:")
+    print("   🔄 Adaptive delays enabled")
+    print("   🛡️ Circuit breaker protection active")
+    print("   🎯 Query optimization enabled")
+    print("   📊 Pattern learning active")
+
+    # Process each region with smart handling
     for region in regions_to_process:
         region_name = region.replace("-", " ")
         print(f"\n===== Processing region: {region_name.title()} =====")
@@ -96,7 +109,12 @@ def run_monsoon_script(target_date=None, days_back=0, single_state=None):
         
         all_region_entries = []
         
-        for lang_code in region_languages:
+        # Smart inter-language delay
+        inter_language_delay = smart_handler.adaptive_delay()
+        
+        for lang_index, lang_code in enumerate(region_languages):
+            print(f"\n--- Processing language: {lang_code} ({lang_index + 1}/{len(region_languages)}) ---")
+            
             # Get monsoon-specific terms for this language
             monsoon_terms = get_climate_impact_terms(lang_code)
             print(f"🌧️ Using {len(monsoon_terms)} monsoon terms for {lang_code}")
@@ -106,41 +124,62 @@ def run_monsoon_script(target_date=None, days_back=0, single_state=None):
             gn = pygooglenews.GoogleNews(lang=lang_code, country='IN')
             
             # Create comprehensive query strategies for better coverage
-            queries = create_comprehensive_monsoon_queries(monsoon_terms, region_name, lang_code)
+            queries = create_smart_monsoon_queries(monsoon_terms, region_name, lang_code)
             
-            for query in queries:
-                print(f"🔍 Query: {query} | Language: {lang_code}")
+            # Track query performance for this language
+            successful_queries = 0
+            total_queries = len(queries)
+            
+            for query_index, query in enumerate(queries):
+                print(f"🔍 Query {query_index + 1}/{total_queries}: {query[:60]}{'...' if len(query) > 60 else ''} | Language: {lang_code}")
                 
-                try:
-                    results = gn.search(query=query, when=when_parameter)
-                    
-                    if not results or 'entries' not in results or not results['entries']:
-                        print(f"⚠ No results found for this query in [{lang_code}].")
-                        continue
-                    
-                    total_articles = len(results['entries'])
-                    print(f"✅ Found {total_articles} total articles for {region_name} in [{lang_code}]")
-                    
-                    # Extract with STRICT date filtering and enhanced content validation
-                    entries = extract_results_with_strict_date_filter(
-                        results, "Monsoon", lang_code, start_date, end_date, monsoon_terms
-                    )
-                    
-                    filtered_count = len(entries)
-                    print(f"📅 STRICTLY filtered to {filtered_count} relevant monsoon articles within date range")
-                    
-                    if filtered_count > 0:
-                        dates = [datetime.strptime(entry[2].split()[0], "%Y-%m-%d").date() 
-                                for entry in entries]
-                        print(f"📊 Dates in filtered articles: {sorted(set(dates))}")
-                    
-                    all_region_entries.extend(entries)
-
-                except Exception as e:
-                    print(f"❌ Error searching for {region} in [{lang_code}]: {e}")
+                # Use smart search with advanced error handling
+                results = smart_handler.smart_search(
+                    gn_instance=gn,
+                    query=query,
+                    when_parameter=when_parameter,
+                    lang_code=lang_code,
+                    region=region,
+                    max_retries=4
+                )
                 
-                # Respect rate limits
-                time.sleep(2)
+                if not results or 'entries' not in results or not results['entries']:
+                    print(f"⚠ No results found for this query in [{lang_code}].")
+                    continue
+                
+                total_articles = len(results['entries'])
+                print(f"✅ Found {total_articles} total articles for {region_name} in [{lang_code}]")
+                
+                # Extract with STRICT date filtering and enhanced content validation
+                entries = extract_results_with_strict_date_filter(
+                    results, "Monsoon", lang_code, start_date, end_date, monsoon_terms
+                )
+                
+                filtered_count = len(entries)
+                print(f"📅 STRICTLY filtered to {filtered_count} relevant monsoon articles within date range")
+                
+                if filtered_count > 0:
+                    successful_queries += 1
+                    dates = [datetime.strptime(entry[2].split()[0], "%Y-%m-%d").date() 
+                            for entry in entries]
+                    print(f"📊 Dates in filtered articles: {sorted(set(dates))}")
+                
+                all_region_entries.extend(entries)
+                
+                # Smart inter-query delay
+                query_delay = smart_handler.adaptive_delay()
+                if query_index < total_queries - 1:  # Don't delay after last query
+                    print(f"⏳ Smart delay: {query_delay:.1f}s before next query...")
+                    time.sleep(query_delay)
+            
+            # Language processing summary
+            success_rate = (successful_queries / total_queries * 100) if total_queries > 0 else 0
+            print(f"📈 Language {lang_code} summary: {successful_queries}/{total_queries} queries successful ({success_rate:.1f}%)")
+            
+            # Smart inter-language delay (longer between languages)
+            if lang_index < len(region_languages) - 1:  # Don't delay after last language
+                print(f"⏳ Inter-language delay: {inter_language_delay:.1f}s...")
+                time.sleep(inter_language_delay)
             
             # Check region-specific newspapers for this state
             region_newspapers = get_regional_newspapers(newspaper_db, region)
@@ -162,6 +201,98 @@ def run_monsoon_script(target_date=None, days_back=0, single_state=None):
             )
         else:
             print(f"No monsoon articles found for {region_name}")
+        
+        # Print smart handler statistics for this region
+        stats = smart_handler.get_statistics()
+        print(f"🧠 Smart Handler Stats for {region_name}:")
+        print(f"   📊 Overall success rate: {stats['success_rate']:.1f}%")
+        print(f"   🔄 Circuit breaker: {stats['circuit_breaker_state']}")
+        print(f"   🚫 Banned patterns: {stats['banned_patterns']}")
+    
+    # Final pipeline statistics
+    print(f"\n🎉 Pipeline completed! Final Smart Handler Statistics:")
+    final_stats = smart_handler.get_statistics()
+    print(f"📊 Total requests: {final_stats['total_requests']}")
+    print(f"✅ Successful requests: {final_stats['successful_requests']}")
+    print(f"📈 Overall success rate: {final_stats['success_rate']:.1f}%")
+    print(f"🔄 Circuit breaker state: {final_stats['circuit_breaker_state']}")
+    print(f"🚫 Banned query patterns: {final_stats['banned_patterns']}")
+    
+    # Cleanup sessions
+    smart_handler.cleanup_sessions()
+
+def create_smart_monsoon_queries(monsoon_terms, region_name, lang_code):
+    """
+    Create optimized queries using smart handler insights and patterns.
+    Reduces query volume and complexity to avoid rate limiting.
+    """
+    if not monsoon_terms:
+        print(f"⚠️ No monsoon terms found for language {lang_code}")
+        return [f"monsoon {region_name}"]
+    
+    print(f"🔤 Creating SMART queries from {len(monsoon_terms)} terms for {lang_code}")
+    
+    queries = []
+    
+    # Strategy 1: Start with individual high-impact terms (reduced from 5 to 3)
+    priority_terms = monsoon_terms[:3]  # Only top 3 terms
+    for i, term in enumerate(priority_terms):
+        if term.strip():
+            query = f'"{term}" {region_name}'
+            queries.append(query)
+            print(f"   Priority query {i+1}: {query}")
+    
+    # Strategy 2: Smart weather phenomena combination (simplified)
+    if len(monsoon_terms) >= 3:
+        weather_query = f'({monsoon_terms[0]} OR {monsoon_terms[1]}) {region_name}'
+        queries.append(weather_query)
+        print(f"   Weather query: {weather_query}")
+    
+    # Strategy 3: Impact terms (reduced complexity)
+    if len(monsoon_terms) >= 6:
+        impact_terms = monsoon_terms[3:6]  # Only 3 impact terms instead of 5
+        impact_query = f'({" OR ".join(impact_terms[:2])}) {region_name}'  # Only 2 terms
+        queries.append(impact_query)
+        print(f"   Impact query: {impact_query}")
+    
+    # Strategy 4: Adaptive query count based on environment and success patterns
+    is_local = os.environ.get('GITHUB_ACTIONS') != 'true'
+    
+    if is_local:
+        # Local testing - very conservative
+        print("🏠 Local mode: Using minimal query set to avoid rate limits")
+        queries = queries[:3]  # Only first 3 queries
+    else:
+        # GitHub Actions - can be more aggressive but still smart
+        # Strategy 5: Health/infrastructure (only if we have enough terms)
+        if len(monsoon_terms) >= 10:
+            health_terms = monsoon_terms[8:10]  # Only 2 health terms
+            health_query = f'({" OR ".join(health_terms)}) {region_name}'
+            queries.append(health_query)
+            print(f"   Health query: {health_query}")
+        
+        # Strategy 6: Broad search (simplified)
+        if len(monsoon_terms) >= 8:
+            broad_terms = [
+                monsoon_terms[0],    # main monsoon term
+                monsoon_terms[3] if len(monsoon_terms) > 3 else monsoon_terms[1],    # flood term
+                monsoon_terms[7] if len(monsoon_terms) > 7 else monsoon_terms[-1]    # last available term
+            ]
+            broad_query = f'({" OR ".join([term for term in broad_terms if term])}) {region_name}'
+            queries.append(broad_query)
+            print(f"   Broad query: {broad_query}")
+    
+    # Smart query validation and optimization
+    optimized_queries = []
+    for query in queries:
+        # Skip overly complex queries that often get rate limited
+        if query.count('OR') <= 4 and len(query) <= 200:  # Reasonable complexity limits
+            optimized_queries.append(query)
+        else:
+            print(f"🔧 Skipping overly complex query: {query[:50]}...")
+    
+    print(f"📊 Created {len(optimized_queries)} optimized queries for {lang_code}")
+    return optimized_queries
 
 def load_newspaper_database():
     """Load the newspaper database from CSV file"""
@@ -246,75 +377,6 @@ def get_regional_newspapers(newspaper_db, region):
         print(f"📰 Found {len(newspapers)} newspapers for {region_display}")
     
     return newspapers
-
-
-def create_comprehensive_monsoon_queries(monsoon_terms, region_name, lang_code):
-    """Create queries using ALL important terms from language_map.py - comprehensive coverage"""
-    if not monsoon_terms:
-        print(f"⚠️ No monsoon terms found for language {lang_code}")
-        return [f"monsoon {region_name}"]
-    
-    print(f"🔤 Creating queries from {len(monsoon_terms)} terms from language_map for {lang_code}")
-    
-    queries = []
-    
-    # Strategy 1: Individual high-impact terms (first 5 terms)
-    for i, term in enumerate(monsoon_terms[:5]):
-        if term.strip():
-            query = f'"{term}" {region_name}'
-            queries.append(query)
-            print(f"   Individual query {i+1}: {query}")
-    
-    # Strategy 2: Weather phenomena (terms 1-3)
-    if len(monsoon_terms) >= 3:
-        weather_query = f'({monsoon_terms[0]} OR {monsoon_terms[1]} OR {monsoon_terms[2]}) {region_name}'
-        queries.append(weather_query)
-        print(f"   Weather query: {weather_query}")
-    
-    # Strategy 3: Impact/disaster terms (terms 4-8)
-    if len(monsoon_terms) >= 8:
-        impact_terms = monsoon_terms[3:8]  # flood, flash flood, waterlogging, landslide, cyclone
-        impact_query = f'({" OR ".join(impact_terms)}) {region_name}'
-        queries.append(impact_query)
-        print(f"   Impact query: {impact_query}")
-    
-    # Strategy 4: Health/infrastructure terms (terms 9-15)
-    if len(monsoon_terms) >= 15:
-        health_infra_terms = monsoon_terms[8:15]  # power outage, pipeline burst, sewage overflow, snakebite, cholera, dengue, malaria
-        health_query = f'({" OR ".join(health_infra_terms)}) {region_name}'
-        queries.append(health_query)
-        print(f"   Health/Infrastructure query: {health_query}")
-    
-    # Strategy 5: Secondary impact terms (terms 16-20)
-    if len(monsoon_terms) >= 20:
-        secondary_terms = monsoon_terms[15:20]  # economic loss, deaths, rainfall, storm, weather alert
-        secondary_query = f'({" OR ".join(secondary_terms)}) {region_name}'
-        queries.append(secondary_query)
-        print(f"   Secondary impact query: {secondary_query}")
-    
-    # Strategy 6: Rescue/response terms (terms 21+)
-    if len(monsoon_terms) >= 25:
-        response_terms = monsoon_terms[20:25]  # IMD, meteorological, precipitation, rescue operations, relief camps
-        response_query = f'({" OR ".join(response_terms)}) {region_name}'
-        queries.append(response_query)
-        print(f"   Response/Relief query: {response_query}")
-    
-    # Strategy 7: Comprehensive broad search (mix of all categories)
-    if len(monsoon_terms) >= 10:
-        # Mix terms from different categories for comprehensive coverage
-        broad_terms = [
-            monsoon_terms[0],    # main monsoon term
-            monsoon_terms[3] if len(monsoon_terms) > 3 else monsoon_terms[1],    # flood term
-            monsoon_terms[11] if len(monsoon_terms) > 11 else monsoon_terms[-1], # snakebite or last term
-            monsoon_terms[13] if len(monsoon_terms) > 13 else monsoon_terms[-2], # dengue or second last
-            monsoon_terms[23] if len(monsoon_terms) > 23 else monsoon_terms[-3]  # rescue or third last
-        ]
-        broad_query = f'({" OR ".join([term for term in broad_terms if term])}) {region_name}'
-        queries.append(broad_query)
-        print(f"   Comprehensive broad query: {broad_query}")
-    
-    print(f"📊 Created {len(queries)} queries for {lang_code}")
-    return queries
 
 def extract_results_with_strict_date_filter(results, term, lang_code, start_date, end_date, monsoon_terms):
     """Extract results with extremely strict date filtering and enhanced monsoon content validation"""
@@ -430,10 +492,10 @@ def is_monsoon_content_relevant(text, monsoon_terms):
     return False
 
 def process_newspaper_sources(newspapers, region, start_date, end_date):
-    """Process newspaper websites intelligently for monsoon content"""
+    """Process newspaper websites intelligently for monsoon content with smart delays"""
     entries = []
     
-    for newspaper in newspapers:
+    for i, newspaper in enumerate(newspapers):
         try:
             print(f"Checking newspaper: {newspaper['name']} ({newspaper['language']})")
             website = newspaper['website']
@@ -441,6 +503,11 @@ def process_newspaper_sources(newspapers, region, start_date, end_date):
             # Skip invalid URLs
             if not website or not website.startswith(('http://', 'https://')):
                 continue
+            
+            # Smart delay between newspaper requests
+            if i > 0:
+                delay = smart_handler.adaptive_delay() * 0.5  # Shorter delay for newspapers
+                time.sleep(delay)
             
             response = requests.get(website, headers={
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36'
@@ -461,8 +528,8 @@ def process_newspaper_sources(newspapers, region, start_date, end_date):
             
             print(f"Found {len(monsoon_links)} potential monsoon articles on {newspaper['name']}")
             
-            # Process each link with validation
-            for link in monsoon_links[:6]:  # Limit to 6 articles per newspaper
+            # Process each link with validation (limited to prevent overload)
+            for link in monsoon_links[:4]:  # Reduced from 6 to 4 articles per newspaper
                 try:
                     article_data = extract_and_validate_newspaper_article(
                         link, start_date, end_date, monsoon_terms, newspaper['name']
@@ -482,6 +549,7 @@ def process_newspaper_sources(newspapers, region, start_date, end_date):
     
     return entries
 
+# Include all the remaining functions from your original monsoon.py
 def map_newspaper_language_to_code(language_str):
     """Map newspaper language string to language code"""
     language_mapping = {
@@ -990,17 +1058,51 @@ def convert_gmt_to_ist(gmt_datetime):
         return gmt_datetime
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='Run monsoon news article collection script')
+    parser = argparse.ArgumentParser(description='Run smart monsoon news article collection script with advanced rate limiting')
     parser.add_argument('--date', type=str, help='Target date in YYYY-MM-DD format (default: current date)')
     parser.add_argument('--days-back', type=int, default=0, help='Number of days to look back from target date (default: 0)')
     parser.add_argument('--state', type=str, help='Process only this single state/UT (e.g., kerala, maharashtra, delhi)')
+    parser.add_argument('--reset-smart-handler', action='store_true', help='Reset smart handler state for fresh start')
     
     args = parser.parse_args()
     
-    print("🌧️ Starting Monsoon News Collection")
+    if args.reset_smart_handler:
+        smart_handler.reset_state()
+        print("🔄 Smart handler state reset")
+    
+    print("🌧️ Starting Smart Monsoon News Collection")
     print(f"📅 Target date: {args.date if args.date else 'Current date'}")
     print(f"📅 Days back: {args.days_back}")
     if args.state:
         print(f"🎯 Single state mode: {args.state}")
     
-    run_monsoon_script(target_date=args.date, days_back=args.days_back, single_state=args.state)
+    try:
+        run_monsoon_script(target_date=args.date, days_back=args.days_back, single_state=args.state)
+        
+        # Print final smart handler statistics
+        print("\n🎯 Final Smart Handler Report:")
+        final_stats = smart_handler.get_statistics()
+        print(f"📊 Success rate: {final_stats['success_rate']:.1f}%")
+        print(f"🔄 Circuit breaker: {final_stats['circuit_breaker_state']}")
+        if final_stats['per_region_stats']:
+            print("📍 Top performing regions:")
+            region_stats = sorted(final_stats['per_region_stats'].items(), 
+                                key=lambda x: x[1]['success_rate'], reverse=True)[:5]
+            for region, stats in region_stats:
+                print(f"   {region}: {stats['success_rate']:.1f}% ({stats['requests']} requests)")
+        
+        print("✅ Smart Monsoon News Collection completed successfully!")
+        
+    except KeyboardInterrupt:
+        print("\n⚠️ Collection interrupted by user")
+        print("🧠 Smart handler statistics at interruption:")
+        stats = smart_handler.get_statistics()
+        print(f"📊 Processed {stats['total_requests']} requests with {stats['success_rate']:.1f}% success rate")
+        smart_handler.cleanup_sessions()
+    except Exception as e:
+        print(f"❌ Error during collection: {e}")
+        print("🧠 Smart handler final statistics:")
+        stats = smart_handler.get_statistics()
+        print(f"📊 Processed {stats['total_requests']} requests with {stats['success_rate']:.1f}% success rate")
+        smart_handler.cleanup_sessions()
+        raise

@@ -7,10 +7,12 @@ import threading
 import traceback
 import requests
 from bs4 import BeautifulSoup
-from concurrent.futures import ProcessPoolExecutor, TimeoutError
+from concurrent.futures import ProcessPoolExecutor, TimeoutError, as_completed
 from contextlib import contextmanager
 import signal
 import hashlib
+from urllib.parse import urljoin, urlparse
+from typing import List, Tuple, Optional
 
 # Import webdriver manager for automatic ChromeDriver management
 from selenium import webdriver
@@ -48,8 +50,8 @@ logging.basicConfig(
     datefmt="%Y-%m-%d %H:%M:%S"
 )
 
-# Global watchdog timer thread to force-kill if all else fails
 class DriverWatchdog(threading.Thread):
+    """Global watchdog timer thread to force-kill if all else fails"""
     def __init__(self, driver_pid, timeout=60):
         super(DriverWatchdog, self).__init__(daemon=True)
         self.driver_pid = driver_pid
@@ -67,7 +69,6 @@ class DriverWatchdog(threading.Thread):
     def kill_driver(self):
         if not PSUTIL_AVAILABLE:
             return
-            
         try:
             kill_process_tree(self.driver_pid)
         except Exception as e:
@@ -76,8 +77,8 @@ class DriverWatchdog(threading.Thread):
     def stop(self):
         self.stopped.set()
 
-# Class for handling timeouts with a context manager
 class TimeoutHandler:
+    """Class for handling timeouts with a context manager"""
     def __init__(self, seconds, error_message='Process timed out'):
         self.seconds = seconds
         self.error_message = error_message
@@ -107,11 +108,16 @@ def get_driver():
     chrome_options.add_argument("--headless=new")  # Use new headless mode
     chrome_options.add_argument("--disable-gpu")  # Disable GPU for headless
     
+    # NEW: GitHub Actions compatibility
+    chrome_bin = os.environ.get('CHROME_BIN')
+    if chrome_bin and os.path.exists(chrome_bin):
+        chrome_options.binary_location = chrome_bin
+        logging.info(f"Using Chrome from CHROME_BIN: {chrome_bin}")
+    
     # Use eager page load strategy but don't block images - crucial for proper rendering
     chrome_options.page_load_strategy = 'eager'
     
     # Set preferences for better performance 
-    # Keep images enabled but disable other resource-intensive features
     prefs = {
         "profile.default_content_setting_values.notifications": 2,  # Block notifications
         "browser.enable_spellchecking": False,  # Disable spellcheck
@@ -134,9 +140,33 @@ def get_driver():
         ("Manual ChromeDriver", lambda: "chromedriver")  # Assumes it's in PATH
     ]
     
+    # NEW: Add GitHub Actions specific strategy first
+    if chrome_bin:
+        driver_strategies.insert(0, ("GitHub Actions Chrome", lambda: None))
+    
     for strategy_name, driver_path_func in driver_strategies:
         try:
             logging.info(f"Attempting {strategy_name}...")
+            
+            # NEW: Handle GitHub Actions strategy
+            if strategy_name == "GitHub Actions Chrome":
+                try:
+                    service = Service()  # Let selenium find chromedriver automatically
+                    driver = webdriver.Chrome(service=service, options=chrome_options)
+                    
+                    # Set longer script timeout for complex pages
+                    driver.set_script_timeout(15)
+                    
+                    # Try to get the Chrome process ID
+                    pid = None
+                    if PSUTIL_AVAILABLE:
+                        pid = get_chrome_pid(driver)
+                        
+                    logging.info(f"Chrome driver initiated successfully using {strategy_name} in process {os.getpid()}, Chrome PID: {pid}")
+                    return driver, pid
+                except Exception as e:
+                    logging.warning(f"GitHub Actions Chrome strategy failed: {e}")
+                    continue
             
             if strategy_name == "WebDriverManager with cache clear":
                 # Clear cache and try again for WebDriverManager
@@ -148,6 +178,10 @@ def get_driver():
             
             driver_path = driver_path_func()
             
+            # Skip validation for None (GitHub Actions case)
+            if driver_path is None:
+                continue
+                
             # Validate that the driver path exists and is executable
             if not os.path.exists(driver_path):
                 logging.warning(f"{strategy_name}: Driver not found at {driver_path}")
@@ -274,6 +308,45 @@ def safely_quit_driver(driver, chrome_pid=None, watchdog=None):
                                 kill_process_tree(proc.pid)
                 except Exception as e:
                     logging.error(f"Error in orphaned Chrome cleanup: {str(e)}")
+
+def detect_language(text):
+    """Simple language detection based on character frequency"""
+    if not text or len(text) < 50:
+        return "en"  # Default to English for short or empty text
+        
+    # Count characters in different scripts
+    devanagari = sum(1 for c in text if '\u0900' <= c <= '\u097F')  # Hindi, Sanskrit, etc.
+    bengali = sum(1 for c in text if '\u0980' <= c <= '\u09FF')
+    tamil = sum(1 for c in text if '\u0B80' <= c <= '\u0BFF')
+    telugu = sum(1 for c in text if '\u0C00' <= c <= '\u0C7F')
+    kannada = sum(1 for c in text if '\u0C80' <= c <= '\u0CFF')
+    malayalam = sum(1 for c in text if '\u0D00' <= c <= '\u0D7F')
+    gujarati = sum(1 for c in text if '\u0A80' <= c <= '\u0AFF')
+    punjabi = sum(1 for c in text if '\u0A00' <= c <= '\u0A7F')
+    
+    # Count total text length and non-Latin characters
+    total_len = len(text)
+    non_latin = sum(1 for c in text if not (c.isascii() and c.isalpha()) and not c.isspace() and not c.isdigit() and c not in ".,;:!?'\"()[]{}")
+    
+    # Determine dominant script
+    scripts = {
+        "hi": devanagari,
+        "bn": bengali,
+        "ta": tamil,
+        "te": telugu,
+        "kn": kannada,
+        "ml": malayalam,
+        "gu": gujarati,
+        "pa": punjabi
+    }
+    
+    # If the text has significant non-Latin characters, identify the script
+    if non_latin > total_len * 0.15:  # If more than 15% non-Latin
+        dominant_script = max(scripts.items(), key=lambda x: x[1])
+        if dominant_script[1] > total_len * 0.1:  # If the script represents over 10% of text
+            return dominant_script[0]
+    
+    return "en"  # Default to English
 
 def fallback_extract_with_requests(url):
     """
@@ -450,44 +523,47 @@ def extract_with_playwright(url):
         logging.error(f"Playwright initialization failed: {e}")
         return None, None, None, None
 
-def detect_language(text):
-    """Simple language detection based on character frequency"""
-    if not text or len(text) < 50:
-        return "en"  # Default to English for short or empty text
-        
-    # Count characters in different scripts
-    devanagari = sum(1 for c in text if '\u0900' <= c <= '\u097F')  # Hindi, Sanskrit, etc.
-    bengali = sum(1 for c in text if '\u0980' <= c <= '\u09FF')
-    tamil = sum(1 for c in text if '\u0B80' <= c <= '\u0BFF')
-    telugu = sum(1 for c in text if '\u0C00' <= c <= '\u0C7F')
-    kannada = sum(1 for c in text if '\u0C80' <= c <= '\u0CFF')
-    malayalam = sum(1 for c in text if '\u0D00' <= c <= '\u0D7F')
-    gujarati = sum(1 for c in text if '\u0A80' <= c <= '\u0AFF')
-    punjabi = sum(1 for c in text if '\u0A00' <= c <= '\u0A7F')
+def wait_for_ready_state(driver, timeout):
+    """Wait for the page to reach a reasonable ready state with improved logic."""
+    start_time = time.time()
+    last_body_size = 0
+    stable_count = 0
     
-    # Count total text length and non-Latin characters
-    total_len = len(text)
-    non_latin = sum(1 for c in text if not (c.isascii() and c.isalpha()) and not c.isspace() and not c.isdigit() and c not in ".,;:!?'\"()[]{}")
+    while time.time() - start_time < timeout:
+        try:
+            ready_state = driver.execute_script("return document.readyState")
+            
+            # Check if body content has stabilized
+            body_size = driver.execute_script("return document.body.innerHTML.length")
+            
+            if ready_state == "complete":
+                logging.info(f"Page reached 'complete' state.")
+                return True
+                
+            if ready_state == "interactive":
+                # For interactive pages, check if content has stabilized
+                if abs(body_size - last_body_size) < 100:  # Content size changes less than 100 chars
+                    stable_count += 1
+                    if stable_count >= 3:  # Content stable for 3 consecutive checks
+                        logging.info(f"Page content stabilized in 'interactive' state.")
+                        return True
+                else:
+                    stable_count = 0
+                    
+            last_body_size = body_size
+            time.sleep(0.5)
+            
+        except Exception as e:
+            logging.warning(f"Error checking ready state: {str(e)}")
+            break
     
-    # Determine dominant script
-    scripts = {
-        "hi": devanagari,
-        "bn": bengali,
-        "ta": tamil,
-        "te": telugu,
-        "kn": kannada,
-        "ml": malayalam,
-        "gu": gujarati,
-        "pa": punjabi
-    }
+    logging.warning(f"Page did not reach complete state after {timeout} sec. Stopping load.")
+    try:
+        driver.execute_script("window.stop();")
+    except Exception as e:
+        logging.error(f"Error calling window.stop(): {str(e)}")
     
-    # If the text has significant non-Latin characters, identify the script
-    if non_latin > total_len * 0.15:  # If more than 15% non-Latin
-        dominant_script = max(scripts.items(), key=lambda x: x[1])
-        if dominant_script[1] > total_len * 0.1:  # If the script represents over 10% of text
-            return dominant_script[0]
-    
-    return "en"  # Default to English
+    return False
 
 def process_url(url):
     """
@@ -497,7 +573,17 @@ def process_url(url):
     pid = os.getpid()
     logging.info(f"Process {pid} started for URL: {url}")
     
-    # Strategy 1: Try Playwright extraction
+    # Strategy 1: Try fallback extraction first (fastest and most reliable)
+    try:
+        logging.info(f"Attempting fallback extraction for {url}")
+        result = fallback_extract_with_requests(url)
+        if result and result[2] and len(result[2]) > 200:
+            logging.info(f"Fallback extraction successful for {url}")
+            return result
+    except Exception as e:
+        logging.warning(f"Fallback extraction failed for {url}: {e}")
+    
+    # Strategy 2: Try Playwright extraction
     if PLAYWRIGHT_AVAILABLE:
         try:
             logging.info(f"Attempting Playwright extraction for {url}")
@@ -508,7 +594,7 @@ def process_url(url):
         except Exception as e:
             logging.warning(f"Playwright extraction failed for {url}: {e}")
     
-    # Strategy 2: Try Selenium (with proper WebDriver management)
+    # Strategy 3: Try Selenium (with proper WebDriver management) - as last resort
     driver = None
     chrome_pid = None
     watchdog = None
@@ -614,60 +700,8 @@ def process_url(url):
         if driver or chrome_pid or watchdog:
             safely_quit_driver(driver, chrome_pid, watchdog)
     
-    # Strategy 3: Try direct fallback with requests/BeautifulSoup
-    try:
-        logging.info(f"Attempting fallback extraction for {url}")
-        result = fallback_extract_with_requests(url)
-        if result and result[2] and len(result[2]) > 200:
-            logging.info(f"Fallback extraction successful for {url}")
-            return result
-    except Exception as e:
-        logging.error(f"Fallback extraction failed for {url}: {e}")
-    
     logging.warning(f"All extraction strategies failed for {url}")
     return None, None, None, None
-
-def wait_for_ready_state(driver, timeout):
-    """Wait for the page to reach a reasonable ready state with improved logic."""
-    start_time = time.time()
-    last_body_size = 0
-    stable_count = 0
-    
-    while time.time() - start_time < timeout:
-        try:
-            ready_state = driver.execute_script("return document.readyState")
-            
-            # Check if body content has stabilized
-            body_size = driver.execute_script("return document.body.innerHTML.length")
-            
-            if ready_state == "complete":
-                logging.info(f"Page reached 'complete' state.")
-                return True
-                
-            if ready_state == "interactive":
-                # For interactive pages, check if content has stabilized
-                if abs(body_size - last_body_size) < 100:  # Content size changes less than 100 chars
-                    stable_count += 1
-                    if stable_count >= 3:  # Content stable for 3 consecutive checks
-                        logging.info(f"Page content stabilized in 'interactive' state.")
-                        return True
-                else:
-                    stable_count = 0
-                    
-            last_body_size = body_size
-            time.sleep(0.5)
-            
-        except Exception as e:
-            logging.warning(f"Error checking ready state: {str(e)}")
-            break
-    
-    logging.warning(f"Page did not reach complete state after {timeout} sec. Stopping load.")
-    try:
-        driver.execute_script("window.stop();")
-    except Exception as e:
-        logging.error(f"Error calling window.stop(): {str(e)}")
-    
-    return False
 
 class ArticleScraper:
     def __init__(self, parallelism=2, process_timeout=60):
@@ -680,7 +714,6 @@ class ArticleScraper:
         """
         self.parallelism = min(parallelism, 3)  # Reduced max parallelism for stability
         self.process_timeout = process_timeout
-        # REMOVED: self.processed_urls - this was causing the global duplicate issue
     
     def getArticles(self, urls):
         if not urls:
@@ -753,7 +786,7 @@ class ArticleScraper:
             future_to_url = {executor.submit(process_url, url): url for url in batch_urls}
             
             processed = start_index
-            for future in future_to_url:
+            for future in as_completed(future_to_url):
                 url = future_to_url[future]
                 try:
                     result = future.result(timeout=self.process_timeout)
@@ -781,6 +814,25 @@ class ArticleScraper:
         except ImportError:
             pass
 
+# Utility function for testing
+def test_single_url(url):
+    """Test extraction on a single URL - useful for debugging"""
+    print(f"🧪 Testing extraction for: {url}")
+    
+    result = process_url(url)
+    
+    if result and result[0]:
+        print(f"✅ Success!")
+        print(f"   Final URL: {result[0]}")
+        print(f"   Title: {result[1][:100] if result[1] else 'No title'}...")
+        print(f"   Content length: {len(result[2]) if result[2] else 0}")
+        print(f"   Language: {result[3] if len(result) > 3 else 'Unknown'}")
+        print(f"   Content preview: {result[2][:200] if result[2] else 'No content'}...")
+    else:
+        print("❌ Extraction failed")
+    
+    return result
+
 if __name__ == '__main__':
     # For testing purposes, run with a sample URL
     test_urls = [
@@ -788,15 +840,35 @@ if __name__ == '__main__':
         "https://indianexpress.com/article/cities/delhi/delhi-news-live-updates-weather-heatwave-bjp-aap-9931292/"
     ]
     
+    print("🧪 Testing ArticleScraper with sample URLs...")
+    
     scraper = ArticleScraper(parallelism=1, process_timeout=60)
     articles = scraper.getArticles(test_urls)
     
+    print(f"\n📊 Test Results:")
+    print(f"   Total URLs tested: {len(test_urls)}")
+    print(f"   Results returned: {len(articles)}")
+    
+    successful_extractions = 0
     for i, article in enumerate(articles):
         if article and article[0]:
-            print(f"\nArticle {i+1}:")
-            print(f"URL: {article[0]}")
-            print(f"Title: {article[1]}")
-            print(f"Language: {article[3]}")
-            print(f"Text preview: {article[2][:200]}...")
+            successful_extractions += 1
+            print(f"\n📰 Article {i+1}: ✅ SUCCESS")
+            print(f"   URL: {article[0]}")
+            print(f"   Title: {article[1][:100] if article[1] else 'No title'}...")
+            print(f"   Language: {article[3] if len(article) > 3 else 'Unknown'}")
+            print(f"   Content length: {len(article[2]) if article[2] else 0} characters")
+            if article[2]:
+                print(f"   Content preview: {article[2][:200]}...")
         else:
-            print(f"\nArticle {i+1}: Extraction failed")
+            print(f"\n📰 Article {i+1}: ❌ FAILED")
+            print(f"   URL: {test_urls[i] if i < len(test_urls) else 'Unknown'}")
+    
+    print(f"\n📈 Success rate: {successful_extractions}/{len(test_urls)} ({successful_extractions/len(test_urls)*100:.1f}%)")
+    
+    scraper.quit()
+    
+    if successful_extractions == 0:
+        print("\n⚠️ Warning: No articles were successfully extracted. Check your internet connection and dependencies.")
+    else:
+        print(f"\n✅ Test completed successfully!")

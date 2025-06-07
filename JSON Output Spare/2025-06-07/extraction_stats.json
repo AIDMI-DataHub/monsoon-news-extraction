@@ -1,0 +1,51 @@
+{
+  "extraction_date": "2025-06-07",
+  "total_articles": 29,
+  "language_stats": {
+    "total_articles": 29,
+    "language_distribution": {
+      "hi": {
+        "count": 10,
+        "percentage": 34.48
+      },
+      "en": {
+        "count": 17,
+        "percentage": 58.62
+      },
+      "gu": {
+        "count": 1,
+        "percentage": 3.45
+      },
+      "bn": {
+        "count": 1,
+        "percentage": 3.45
+      }
+    }
+  },
+  "quality_breakdown": {
+    "high": 23,
+    "medium": 2,
+    "low": 4
+  },
+  "region_breakdown": {
+    "delhi": 5,
+    "dadra-and-nagar-haveli-and-daman-and-diu": 2,
+    "puducherry": 3,
+    "tamil-nadu": 1,
+    "gujarat": 1,
+    "west-bengal": 2,
+    "uttar-pradesh": 4,
+    "maharashtra": 1,
+    "madhya-pradesh": 3,
+    "rajasthan": 1,
+    "kerala": 1,
+    "chhattisgarh": 1,
+    "himachal-pradesh": 2,
+    "uttarakhand": 1,
+    "bihar": 1
+  },
+  "disaster_breakdown": {
+    "Monsoon": 29
+  },
+  "extraction_timestamp": "2025-06-07 10:40:14"
+}

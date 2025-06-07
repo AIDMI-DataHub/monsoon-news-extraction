@@ -8,20 +8,6 @@ on:
   
   # Allow manual triggering
   workflow_dispatch:
-    inputs:
-      date:
-        description: 'Target date (YYYY-MM-DD)'
-        required: false
-        type: string
-      days_back:
-        description: 'Number of days to look back'
-        required: false
-        default: '0'
-        type: string
-      state:
-        description: 'Process only this state/UT'
-        required: false
-        type: string
 
 jobs:
   extract-monsoon-news:
@@ -29,81 +15,89 @@ jobs:
     
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
       
     - name: Set up Python
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
       with:
-        python-version: '3.9'  # Explicitly use Python 3.9
+        python-version: '3.9'
+    
+    # CRITICAL: Install Chrome and ChromeDriver for GitHub Actions
+    - name: Install Chrome
+      uses: browser-actions/setup-chrome@latest
+      with:
+        chrome-version: stable
+    
+    - name: Setup ChromeDriver
+      uses: nanasess/setup-chromedriver@master
+    
+    # Set up virtual display for headless browsing
+    - name: Setup virtual display
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y xvfb
+        export DISPLAY=:99
+        Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
         
     - name: Install Python dependencies
       run: |
         python -m pip install --upgrade pip
+        pip install -r requirements.txt
         
-        # Install core packages first
-        pip install beautifulsoup4==4.9.1
-        pip install requests==2.24.0
-        pip install dateparser==0.7.6
-        pip install pandas==2.1.4
-        pip install lxml==5.3.2
-        pip install lxml_html_clean==0.4.1
-        pip install psutil==5.9.5
-        pip install trafilatura==2.0.0
-        
-        # Install selenium and webdriver-manager (but no browser setup)
-        pip install selenium==4.10.0
-        pip install webdriver-manager==4.0.0
-        
-        # Handle the problematic packages separately
-        # Install pygooglenews without dependencies
-        pip install pygooglenews==0.1.2 --no-deps
-        
-        # Install feedparser (this will override any conflicts)
-        pip install feedparser==6.0.0 --force-reinstall
-        
-        # Install newspaper3k without dependencies to avoid feedparser conflict
-        pip install newspaper3k==0.2.8 --no-deps
-        
-        # Install newspaper3k's other dependencies manually
-        pip install Pillow PyYAML cssselect nltk tldextract feedfinder2 jieba3k tinysegmenter
-        
-        echo "Installed selenium but skipping browser setup - will use fallback methods"
-        
-    - name: Create data directories
+    - name: Verify Chrome installation
       run: |
-        mkdir -p data
-        mkdir -p "JSON Output"
-        mkdir -p "JSON Output Spare"
+        echo "Chrome version:"
+        google-chrome --version
+        echo "ChromeDriver version:"
+        chromedriver --version
+        echo "Chrome binary location:"
+        which google-chrome
+        export CHROME_BIN=$(which google-chrome)
+        echo "CHROME_BIN=$CHROME_BIN" >> $GITHUB_ENV
         
-    - name: Run monsoon pipeline
+    - name: Run monsoon data extraction
       env:
-        # Set timezone to IST for logging
-        TZ: Asia/Kolkata
+        CHROME_BIN: /usr/bin/google-chrome
+        DISPLAY: :99
       run: |
-        # Build command with optional parameters
-        CMD="python main.py"
+        python monsoon_pipeline.py
         
-        if [ -n "${{ github.event.inputs.date }}" ]; then
-          CMD="$CMD --date ${{ github.event.inputs.date }}"
-        fi
-        
-        if [ -n "${{ github.event.inputs.days_back }}" ]; then
-          CMD="$CMD --days-back ${{ github.event.inputs.days_back }}"
-        fi
-        
-        if [ -n "${{ github.event.inputs.state }}" ]; then
-          CMD="$CMD --state ${{ github.event.inputs.state }}"
-        fi
-        
-        echo "Running: $CMD"
-        eval $CMD
-        
-    - name: Commit and push changes
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - name: Verify extraction results
       run: |
-        git config --global user.name 'github-actions[bot]'
-        git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+        echo "📊 Checking pipeline outputs..."
+        
+        # Count CSV files
+        csv_count=$(find . -name "*.csv" -type f | wc -l)
+        echo "📂 CSV files created: $csv_count"
+        
+        # Check JSON output folders
+        if [ -d "JSON Output" ]; then
+          json_output_count=$(find "JSON Output" -name "*.json" -type f | wc -l)
+          echo "📂 JSON Output folder: $json_output_count"
+        else
+          echo "📂 JSON Output folder: 0 (folder not found)"
+        fi
+        
+        if [ -d "JSON Output Spare" ]; then
+          json_spare_count=$(find "JSON Output Spare" -name "*.json" -type f | wc -l)
+          echo "📂 JSON Output Spare folder: $json_spare_count"
+        else
+          echo "📂 JSON Output Spare folder: 0 (folder not found)"
+        fi
+        
+        # List some files for verification
+        echo "📁 Recent files created:"
+        find . -name "*.json" -o -name "*.csv" -type f -newermt "1 hour ago" | head -10
+        
+    - name: Commit and push results
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
         git add .
-        git commit -m "🌧️ Automated monsoon news extraction - $(date +%Y-%m-%d)"
-        git push origin main
+        if git diff --staged --quiet; then
+          echo "No changes to commit"
+        else
+          git commit -m "Daily monsoon data extraction - $(date +'%Y-%m-%d %H:%M:%S')"
+          git push
+          echo "✅ Changes committed and pushed"
+        fi
