@@ -60,7 +60,7 @@ jobs:
         CHROME_BIN: /usr/bin/google-chrome
         DISPLAY: :99
       run: |
-        python monsoon_pipeline.py
+        python monsoon.py
         
     - name: Verify extraction results
       run: |
