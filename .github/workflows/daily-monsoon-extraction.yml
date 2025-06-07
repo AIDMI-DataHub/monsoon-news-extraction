@@ -1,0 +1,254 @@
+# .github/workflows/daily-monsoon-extraction.yml
+name: Daily Monsoon News Extraction
+
+on:
+  schedule:
+    # Run daily at 5:00 AM UTC (10:30 AM IST)
+    - cron: '0 5 * * *'
+  
+  # Allow manual triggering
+  workflow_dispatch:
+    inputs:
+      date:
+        description: 'Target date (YYYY-MM-DD)'
+        required: false
+        type: string
+      days_back:
+        description: 'Number of days to look back'
+        required: false
+        default: '0'
+        type: string
+      state:
+        description: 'Process only this state/UT'
+        required: false
+        type: string
+
+jobs:
+  extract-monsoon-news:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90  # Increased timeout
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+        
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y wget unzip curl xvfb
+        
+    - name: Install Google Chrome
+      run: |
+        # Add Google Chrome repository
+        wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
+        echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" | sudo tee /etc/apt/sources.list.d/google-chrome.list
+        sudo apt-get update
+        sudo apt-get install -y google-chrome-stable
+        
+        # Verify installation
+        google-chrome --version
+        which google-chrome
+        
+        # Set environment variables
+        echo "CHROME_BIN=/usr/bin/google-chrome" >> $GITHUB_ENV
+        echo "DISPLAY=:99" >> $GITHUB_ENV
+        
+    - name: Install Python dependencies
+      run: |
+        python -m pip install --upgrade pip
+        
+        # Install core packages with compatible versions
+        pip install requests==2.31.0
+        pip install beautifulsoup4==4.12.2
+        pip install lxml==4.9.3
+        pip install pandas==2.1.4
+        pip install dateparser==1.1.8
+        pip install pytz==2023.3
+        pip install psutil==5.9.5
+        
+        # Install extraction libraries
+        pip install trafilatura==1.6.2
+        pip install newspaper3k==0.2.8 --no-deps
+        pip install Pillow PyYAML cssselect nltk tldextract feedfinder2 jieba3k tinysegmenter
+        
+        # Install selenium with webdriver manager
+        pip install selenium==4.15.0
+        pip install webdriver-manager==4.0.1
+        
+        # Install news libraries
+        pip install pygooglenews==0.1.2 --no-deps
+        pip install feedparser==6.0.10
+        
+        # Optional: Install playwright as backup
+        pip install playwright==1.40.0
+        
+    - name: Install browser drivers
+      run: |
+        # Install playwright browsers
+        playwright install chromium || echo "Playwright install failed, continuing..."
+        
+    - name: Create directories
+      run: |
+        mkdir -p data
+        mkdir -p "JSON Output"
+        mkdir -p "JSON Output Spare"
+        
+    - name: Start virtual display
+      run: |
+        # Start Xvfb for headless browser testing
+        Xvfb :99 -ac -screen 0 1280x1024x24 > /dev/null 2>&1 &
+        sleep 2
+        export DISPLAY=:99
+        echo "DISPLAY=:99" >> $GITHUB_ENV
+        
+    - name: Verify environment
+      run: |
+        echo "🔍 Environment verification:"
+        echo "Python version: $(python --version)"
+        echo "Chrome version: $(google-chrome --version)"
+        echo "Display: $DISPLAY"
+        echo "Chrome binary: $CHROME_BIN"
+        
+        echo "📦 Installed packages:"
+        pip list | grep -E "(selenium|requests|pandas|beautifulsoup4|trafilatura|newspaper|pygooglenews|pytz)"
+        
+        echo "🌐 Testing Chrome headless:"
+        google-chrome --headless --no-sandbox --disable-gpu --dump-dom about:blank | head -5
+        
+    - name: Run monsoon pipeline
+      env:
+        TZ: Asia/Kolkata
+        PYTHONUNBUFFERED: 1
+        CHROME_BIN: /usr/bin/google-chrome
+        DISPLAY: :99
+      run: |
+        echo "🚀 Starting monsoon pipeline..."
+        
+        # Build command with parameters
+        CMD="python monsoon.py"
+        
+        if [ -n "${{ github.event.inputs.date }}" ]; then
+          CMD="$CMD --date ${{ github.event.inputs.date }}"
+          echo "📅 Using date: ${{ github.event.inputs.date }}"
+        fi
+        
+        if [ -n "${{ github.event.inputs.days_back }}" ]; then
+          CMD="$CMD --days-back ${{ github.event.inputs.days_back }}"
+          echo "📅 Days back: ${{ github.event.inputs.days_back }}"
+        fi
+        
+        if [ -n "${{ github.event.inputs.state }}" ]; then
+          CMD="$CMD --state ${{ github.event.inputs.state }}"
+          echo "🎯 State filter: ${{ github.event.inputs.state }}"
+        fi
+        
+        echo "▶️ Executing: $CMD"
+        timeout 4500 $CMD || {
+          echo "❌ Pipeline timed out or failed"
+          exit 1
+        }
+        
+    - name: Check pipeline outputs
+      run: |
+        echo "📊 Pipeline output analysis:"
+        
+        # Check data folder structure
+        if [ -d "data" ]; then
+          echo "✅ Data folder exists"
+          CSV_COUNT=$(find data -name "*.csv" -type f | wc -l)
+          echo "📋 CSV files found: $CSV_COUNT"
+          
+          if [ $CSV_COUNT -gt 0 ]; then
+            echo "📁 Sample CSV files:"
+            find data -name "*.csv" -type f | head -5
+            
+            echo "📈 CSV file sizes:"
+            find data -name "*.csv" -type f -exec ls -lh {} \; | head -5
+          fi
+        else
+          echo "❌ No data folder found"
+        fi
+        
+        # Check JSON outputs
+        JSON_COUNT=0
+        if [ -d "JSON Output" ]; then
+          echo "✅ JSON Output folder exists"
+          JSON_COUNT=$(find "JSON Output" -name "*.json" -type f | wc -l)
+          echo "📋 JSON files found: $JSON_COUNT"
+          
+          if [ $JSON_COUNT -gt 0 ]; then
+            echo "📁 JSON Output contents:"
+            ls -la "JSON Output/"
+          fi
+        else
+          echo "❌ No JSON Output folder found"
+        fi
+        
+        # Summary
+        echo "📊 Final counts:"
+        echo "  📋 Total CSV files: $(find . -name "*.csv" -type f | wc -l)"
+        echo "  📄 Total JSON files: $(find . -name "*.json" -type f | wc -l)"
+        echo "  📁 Total directories: $(find data -type d | wc -l)"
+        
+        # Check if we have any meaningful output
+        TOTAL_FILES=$(($(find . -name "*.csv" -type f | wc -l) + $(find . -name "*.json" -type f | wc -l)))
+        if [ $TOTAL_FILES -eq 0 ]; then
+          echo "⚠️ Warning: No output files generated"
+        else
+          echo "✅ Pipeline generated $TOTAL_FILES output files"
+        fi
+        
+    - name: Commit and push changes
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        # Configure git
+        git config --global user.name 'github-actions[bot]'
+        git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+        
+        # Check for changes
+        git add -A
+        
+        if git diff --staged --quiet; then
+          echo "📝 No changes to commit"
+        else
+          # Show what we're committing
+          echo "📋 Files to commit:"
+          git diff --staged --name-only | head -20
+          
+          # Create commit message with metadata
+          COMMIT_MSG="🌧️ Automated monsoon news extraction - $(date '+%Y-%m-%d %H:%M')"
+          
+          if [ -n "${{ github.event.inputs.date }}" ]; then
+            COMMIT_MSG="$COMMIT_MSG (date: ${{ github.event.inputs.date }})"
+          fi
+          
+          if [ -n "${{ github.event.inputs.state }}" ]; then
+            COMMIT_MSG="$COMMIT_MSG (state: ${{ github.event.inputs.state }})"
+          fi
+          
+          # Add file count to commit message
+          CSV_COUNT=$(find . -name "*.csv" -type f | wc -l)
+          JSON_COUNT=$(find . -name "*.json" -type f | wc -l)
+          COMMIT_MSG="$COMMIT_MSG - $CSV_COUNT CSV, $JSON_COUNT JSON files"
+          
+          git commit -m "$COMMIT_MSG"
+          git push origin main
+          echo "✅ Changes committed and pushed successfully"
+        fi
+        
+    - name: Upload artifacts on failure
+      if: failure()
+      uses: actions/upload-artifact@v3
+      with:
+        name: debug-logs
+        path: |
+          *.log
+          data/
+          JSON Output/
+        retention-days: 7
