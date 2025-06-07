@@ -130,7 +130,7 @@ jobs:
         echo "🚀 Starting monsoon pipeline..."
         
         # Build command with parameters
-        CMD="python monsoon.py"
+        CMD="python main.py"
         
         if [ -n "${{ github.event.inputs.date }}" ]; then
           CMD="$CMD --date ${{ github.event.inputs.date }}"
