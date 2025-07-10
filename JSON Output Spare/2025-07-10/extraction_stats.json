@@ -1,0 +1,79 @@
+{
+  "extraction_date": "2025-07-10",
+  "total_articles": 155,
+  "language_stats": {
+    "total_articles": 155,
+    "language_distribution": {
+      "hi": {
+        "count": 58,
+        "percentage": 37.42
+      },
+      "en": {
+        "count": 84,
+        "percentage": 54.19
+      },
+      "ta": {
+        "count": 1,
+        "percentage": 0.65
+      },
+      "pa": {
+        "count": 4,
+        "percentage": 2.58
+      },
+      "bn": {
+        "count": 1,
+        "percentage": 0.65
+      },
+      "ml": {
+        "count": 1,
+        "percentage": 0.65
+      },
+      "gu": {
+        "count": 6,
+        "percentage": 3.87
+      }
+    }
+  },
+  "quality_breakdown": {
+    "high": 118,
+    "medium": 26,
+    "low": 11
+  },
+  "region_breakdown": {
+    "jharkhand": 6,
+    "karnataka": 3,
+    "uttarakhand": 11,
+    "haryana": 16,
+    "tripura": 11,
+    "bihar": 3,
+    "assam": 1,
+    "west-bengal": 6,
+    "himachal-pradesh": 6,
+    "odisha": 2,
+    "kerala": 1,
+    "gujarat": 14,
+    "sikkim": 1,
+    "chhattisgarh": 3,
+    "rajasthan": 2,
+    "manipur": 5,
+    "nagaland": 2,
+    "meghalaya": 6,
+    "andhra-pradesh": 1,
+    "uttar-pradesh": 6,
+    "madhya-pradesh": 2,
+    "tamil-nadu": 2,
+    "maharashtra": 2,
+    "punjab": 11,
+    "mizoram": 1,
+    "telangana": 2,
+    "chandigarh": 2,
+    "jammu-and-kashmir": 3,
+    "ladakh": 1,
+    "andaman-and-nicobar-islands": 1,
+    "delhi": 22
+  },
+  "disaster_breakdown": {
+    "Monsoon": 155
+  },
+  "extraction_timestamp": "2025-07-10 11:43:08"
+}
