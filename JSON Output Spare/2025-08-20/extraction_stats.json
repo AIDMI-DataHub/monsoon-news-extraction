@@ -1,0 +1,74 @@
+{
+  "extraction_date": "2025-08-20",
+  "total_articles": 140,
+  "language_stats": {
+    "total_articles": 140,
+    "language_distribution": {
+      "hi": {
+        "count": 35,
+        "percentage": 25.0
+      },
+      "en": {
+        "count": 92,
+        "percentage": 65.71
+      },
+      "pa": {
+        "count": 2,
+        "percentage": 1.43
+      },
+      "bn": {
+        "count": 6,
+        "percentage": 4.29
+      },
+      "ta": {
+        "count": 1,
+        "percentage": 0.71
+      },
+      "gu": {
+        "count": 4,
+        "percentage": 2.86
+      }
+    }
+  },
+  "quality_breakdown": {
+    "high": 97,
+    "medium": 26,
+    "low": 17
+  },
+  "region_breakdown": {
+    "delhi": 9,
+    "jammu-and-kashmir": 4,
+    "chandigarh": 6,
+    "ladakh": 1,
+    "bihar": 8,
+    "tamil-nadu": 2,
+    "himachal-pradesh": 6,
+    "andhra-pradesh": 10,
+    "chhattisgarh": 3,
+    "west-bengal": 7,
+    "sikkim": 2,
+    "haryana": 2,
+    "karnataka": 7,
+    "maharashtra": 20,
+    "odisha": 4,
+    "mizoram": 1,
+    "rajasthan": 2,
+    "madhya-pradesh": 8,
+    "kerala": 1,
+    "punjab": 7,
+    "arunachal-pradesh": 1,
+    "assam": 1,
+    "nagaland": 1,
+    "tripura": 1,
+    "goa": 3,
+    "meghalaya": 2,
+    "gujarat": 11,
+    "uttarakhand": 2,
+    "uttar-pradesh": 4,
+    "telangana": 4
+  },
+  "disaster_breakdown": {
+    "Monsoon": 140
+  },
+  "extraction_timestamp": "2025-08-20 11:38:14"
+}
