@@ -7,14 +7,32 @@ from article_scraper import ArticleScraper
 import re
 import hashlib
 import time
+import signal
+import sys
 from urllib.parse import urlparse, parse_qs, urlencode, urlunparse
 
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(message)s",
+    format="%(asctime)s [%(levelname)s] [PID %(process)d] %(message)s",
     datefmt="%Y-%m-%d %H:%M:%S"
 )
+
+# TIMEOUT PROTECTION
+def timeout_handler(signum, frame):
+    """Handle overall extraction timeout"""
+    logging.warning("⏰ EXTRACTION TIMEOUT - Saving partial results and exiting gracefully")
+    # Set a global flag to indicate timeout
+    global EXTRACTION_TIMEOUT
+    EXTRACTION_TIMEOUT = True
+
+def setup_timeout_protection(minutes=45):
+    """Set up timeout protection for the entire extraction process"""
+    global EXTRACTION_TIMEOUT
+    EXTRACTION_TIMEOUT = False
+    signal.signal(signal.SIGALRM, timeout_handler)
+    signal.alarm(minutes * 60)
+    logging.info(f"⏰ Set extraction timeout to {minutes} minutes")
 
 def normalize_url(url):
     """
@@ -56,6 +74,49 @@ def normalize_url(url):
     except Exception as e:
         logging.warning(f"Error normalizing URL {url}: {e}")
         return url.lower().rstrip('/')
+
+def is_problematic_url(url):
+    """
+    Identify URLs that are likely to cause extraction timeouts
+    """
+    problematic_patterns = [
+        r'news\.google\.com/rss/articles/CBMi[a-zA-Z0-9]{100,}',  # Very long Google News URLs
+        r'facebook\.com',
+        r'twitter\.com',
+        r'instagram\.com',
+        r'linkedin\.com',
+        r'youtube\.com'
+    ]
+    
+    for pattern in problematic_patterns:
+        if re.search(pattern, url):
+            return True
+    return False
+
+def filter_urls(urls, max_problematic_ratio=0.3):
+    """
+    Filter URLs to remove problematic ones that cause timeouts
+    """
+    clean_urls = []
+    problematic_urls = []
+    
+    for url in urls:
+        if is_problematic_url(url):
+            problematic_urls.append(url)
+        else:
+            clean_urls.append(url)
+    
+    # If too many problematic URLs, only keep a small sample
+    if len(problematic_urls) > 0:
+        max_problematic = int(len(urls) * max_problematic_ratio)
+        if len(problematic_urls) > max_problematic:
+            logging.warning(f"🚫 Filtering out {len(problematic_urls) - max_problematic} problematic URLs")
+            problematic_urls = problematic_urls[:max_problematic]
+    
+    final_urls = clean_urls + problematic_urls
+    logging.info(f"🔍 URL filtering: {len(clean_urls)} clean, {len(problematic_urls)} problematic, {len(final_urls)} total")
+    
+    return final_urls
 
 def match_final_url_to_original(final_url, original_urls):
     """
@@ -154,8 +215,14 @@ def extract_domain(url):
 
 def extract_articles_from_csv(csv_path, scraper, region_name, disaster_type):
     """
-    Extract articles from a CSV file with improved error handling and better URL processing.
+    Extract articles from a CSV file with improved error handling and timeout protection.
     """
+    global EXTRACTION_TIMEOUT
+    
+    if EXTRACTION_TIMEOUT:
+        logging.warning("⏰ Skipping CSV due to timeout")
+        return []
+    
     if not os.path.exists(csv_path):
         logging.warning(f"CSV path {csv_path} does not exist.")
         return []
@@ -187,21 +254,32 @@ def extract_articles_from_csv(csv_path, scraper, region_name, disaster_type):
         logging.warning(f"⚠ No valid URLs found in {csv_path}")
         return []
     
-    logging.info(f"📊 Processing {len(valid_urls)} URLs from {csv_path}")
+    # APPLY URL FILTERING TO REMOVE PROBLEMATIC ONES
+    filtered_urls = filter_urls(valid_urls, max_problematic_ratio=0.2)
     
-    # Process in smaller batches for better resource management
-    batch_size = 5
+    logging.info(f"📊 Processing {len(filtered_urls)} filtered URLs from {csv_path}")
+    
+    # Process in smaller, more aggressive batches
+    batch_size = 3  # REDUCED from 5 to 3
     all_results = []
     
-    for i in range(0, len(valid_urls), batch_size):
-        batch_urls = valid_urls[i:i+batch_size]
+    for i in range(0, len(filtered_urls), batch_size):
+        if EXTRACTION_TIMEOUT:
+            logging.warning("⏰ Stopping batch processing due to timeout")
+            break
+            
+        batch_urls = filtered_urls[i:i+batch_size]
         batch_num = i//batch_size + 1
-        total_batches = (len(valid_urls) + batch_size - 1)//batch_size
+        total_batches = (len(filtered_urls) + batch_size - 1)//batch_size
         
         logging.info(f"Processing batch {batch_num}/{total_batches} from {csv_path}")
         
-        # Use the improved ArticleScraper to extract articles
+        # Use the improved ArticleScraper to extract articles with SHORTER timeout
+        batch_start_time = time.time()
         batch_results = scraper.getArticles(batch_urls)
+        batch_duration = time.time() - batch_start_time
+        
+        logging.info(f"Batch {batch_num} completed in {batch_duration:.1f}s")
         
         # Only keep successful extractions
         successful_results = []
@@ -229,9 +307,9 @@ def extract_articles_from_csv(csv_path, scraper, region_name, disaster_type):
         
         all_results.extend(successful_results)
         
-        # Pause between batches
-        if i + batch_size < len(valid_urls):
-            time.sleep(2)
+        # Shorter pause between batches but check for timeout
+        if i + batch_size < len(filtered_urls) and not EXTRACTION_TIMEOUT:
+            time.sleep(1)  # REDUCED from 2 seconds to 1 second
     
     # Create a mapping from URL to row in dataframe for looking up metadata
     url_to_row = {}
@@ -291,7 +369,7 @@ def extract_articles_from_csv(csv_path, scraper, region_name, disaster_type):
         
         extracted_data.append(item)
     
-    logging.info(f"✅ Extracted {len(extracted_data)}/{len(valid_urls)} articles from {csv_path}")
+    logging.info(f"✅ Extracted {len(extracted_data)}/{len(filtered_urls)} articles from {csv_path}")
     return extracted_data
 
 def assess_extraction_quality(text):
@@ -651,12 +729,15 @@ def save_results(final_data, language_stats):
 
 def main():
     """
-    Main function to extract articles from CSV files with improved approach.
+    Main function to extract articles from CSV files with timeout protection.
     """
-    logging.info("🔄 Starting article extraction process with improved duplicate handling")
+    # SET UP TIMEOUT PROTECTION FIRST
+    setup_timeout_protection(minutes=45)  # 45-minute overall timeout
     
-    # Initialize the article scraper with improved settings
-    scraper = ArticleScraper(parallelism=1, process_timeout=60)
+    logging.info("🔄 Starting article extraction process with timeout protection")
+    
+    # Initialize the article scraper with REDUCED timeout settings
+    scraper = ArticleScraper(parallelism=1, process_timeout=30)  # REDUCED from 60 to 30 seconds
     
     try:
         # Get all CSV files for today (default) or with optional days range
@@ -676,6 +757,12 @@ def main():
         
         # Process each CSV file with improved extraction
         for csv_info in csv_files:
+            # Check timeout before processing each CSV
+            global EXTRACTION_TIMEOUT
+            if EXTRACTION_TIMEOUT:
+                logging.warning("⏰ Stopping CSV processing due to timeout")
+                break
+                
             csv_path = csv_info['path']
             region_type = csv_info['region_type']
             region_name = csv_info['region_name']
@@ -705,11 +792,14 @@ def main():
             
             all_extracted.extend(data_rows)
             
-            # Add a brief pause between regions
-            time.sleep(2)
+            # Add a brief pause between regions (shorter now)
+            time.sleep(1)
         
         # Clean up the scraper
         scraper.quit()
+        
+        # Cancel the timeout alarm since we're done with extraction
+        signal.alarm(0)
         
         # Use smart deduplication
         logging.info(f"\n🔄 Applying intelligent deduplication to {len(all_extracted)} articles")
@@ -755,6 +845,10 @@ def main():
                 
         else:
             logging.warning("⚠ No articles were successfully extracted")
+            
+        # Log if we hit timeout
+        if EXTRACTION_TIMEOUT:
+            logging.warning("⏰ EXTRACTION COMPLETED WITH TIMEOUT - Partial results saved")
             
     except Exception as e:
         logging.error(f"Error in article extraction process: {e}", exc_info=True)
