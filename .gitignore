@@ -73,3 +73,11 @@ tmp/
 .env.local
 .env.production
 secrets.json
+
+# Add these lines to ignore data files but keep .gitkeep:
+data/*
+!data/.gitkeep
+JSON Output/*
+!JSON Output/.gitkeep
+JSON Output Spare/*
+!JSON Output Spare/.gitkeep
