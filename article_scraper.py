@@ -361,7 +361,7 @@ def fallback_extract_with_requests(url):
         
         # Try with a session for cookies and redirects
         session = requests.Session()
-        response = session.get(url, headers=headers, timeout=20)
+        response = session.get(url, headers=headers, timeout=10)
         
         if response.status_code != 200:
             logging.warning(f"Failed to access {url}: Status code {response.status_code}")
@@ -468,7 +468,7 @@ def extract_with_playwright(url):
                 page = browser.new_page(
                     user_agent='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36'
                 )
-                page.goto(url, timeout=30000, wait_until='domcontentloaded')
+                page.goto(url, timeout=15000, wait_until='domcontentloaded')
                 
                 # Wait a bit for content to be rendered
                 page.wait_for_timeout(2000)
@@ -603,7 +603,7 @@ def process_url(url):
         logging.info(f"Attempting Selenium extraction for {url}")
         
         # Use a context manager for overall timeout
-        with TimeoutHandler(60, f"Overall process for URL {url} timed out"):
+        with TimeoutHandler(25, f"Overall process for URL {url} timed out"):
             # Initialize driver with improved options
             driver, chrome_pid = get_driver()
             
@@ -613,7 +613,7 @@ def process_url(url):
                 watchdog.start()
                 
             # Set page load timeout
-            driver.set_page_load_timeout(30)
+            driver.set_page_load_timeout(15)
             
             try:
                 logging.info(f"Process {pid} requesting URL: {url}")
@@ -720,40 +720,69 @@ class ArticleScraper:
             logging.info("No URLs provided. Exiting getArticles().")
             return []
             
-        # Only filter duplicates within THIS specific batch, not globally
+        # Pre-filter problematic URLs
+        filtered_urls = []
+        skipped_count = 0
+        
+        for url in urls:
+            if self._should_skip_url(url):
+                skipped_count += 1
+                filtered_urls.append(None)  # Keep position but mark as skipped
+            else:
+                filtered_urls.append(url)
+        
+        if skipped_count > 0:
+            logging.info(f"Pre-filtered {skipped_count} problematic URLs")
+        
+        # Remove duplicates within this batch only
         unique_urls = []
         seen_in_batch = set()
         
-        for url in urls:
+        for url in filtered_urls:
+            if url is None:  # Skipped URL
+                unique_urls.append(None)
+                continue
+                
             # Normalize URL for better duplicate detection within this batch
             url_normalized = url.strip().lower()
             if url_normalized not in seen_in_batch:
                 seen_in_batch.add(url_normalized)
                 unique_urls.append(url)
+            else:
+                unique_urls.append(None)  # Mark as duplicate
                 
-        if len(unique_urls) < len(urls):
-            logging.info(f"Filtered out {len(urls) - len(unique_urls)} duplicate URLs within this batch")
+        duplicate_count = len([u for u in filtered_urls if u is not None]) - len([u for u in unique_urls if u is not None])
+        if duplicate_count > 0:
+            logging.info(f"Filtered out {duplicate_count} duplicate URLs within this batch")
             
-        if not unique_urls:
-            logging.info("No new URLs to process after filtering.")
-            return []
+        # Count actual URLs to process
+        urls_to_process = [url for url in unique_urls if url is not None]
+        
+        if not urls_to_process:
+            logging.info("No URLs to process after filtering.")
+            # Return None results for all original URLs
+            return [None for _ in urls]
             
         results = []
-        total = len(unique_urls)
+        total = len(urls_to_process)
         logging.info(f"Processing {total} URLs using {self.parallelism} processes.")
         
         # Process URLs in smaller batches to prevent resource exhaustion
         batch_size = min(5, total)  # Smaller batch size for more stability
+        processed_count = 0
         
         for i in range(0, total, batch_size):
-            batch_urls = unique_urls[i:i+batch_size]
-            batch_results = self._process_batch(batch_urls, i, total)
-            results.extend(batch_results)
+            batch_urls = urls_to_process[i:i+batch_size]
+            logging.info(f"Processing batch {i//batch_size + 1}/{math.ceil(total/batch_size)} ({len(batch_urls)} URLs)")
             
-            # More significant pause between batches
+            batch_results = self._process_batch(batch_urls, processed_count, total)
+            results.extend(batch_results)
+            processed_count += len(batch_urls)
+            
+            # Pause between batches to release resources
             if i + batch_size < total:
                 logging.info(f"Completed batch {i//batch_size + 1}. Pausing to release resources.")
-                time.sleep(5)
+                time.sleep(3)  # REDUCED from 5 to 3 seconds
                 
                 # Force garbage collection
                 try:
@@ -762,9 +791,24 @@ class ArticleScraper:
                 except ImportError:
                     pass
             
-        logging.info(f"Completed processing all articles. Total successful: "
-                    f"{len([r for r in results if r and r[0] is not None])}/{total}")
-        return results
+        # Map results back to original URL positions
+        final_results = []
+        result_index = 0
+        
+        for original_url in unique_urls:
+            if original_url is None:  # Skipped or duplicate URL
+                final_results.append(None)
+            else:
+                if result_index < len(results):
+                    final_results.append(results[result_index])
+                    result_index += 1
+                else:
+                    final_results.append(None)
+        
+        successful_count = len([r for r in final_results if r and r[0] is not None])
+        logging.info(f"Completed processing all articles. Total successful: {successful_count}/{len(urls)} (filtered: {skipped_count + duplicate_count})")
+        
+        return final_results
 
     def _process_batch(self, batch_urls, start_index, total):
         batch_results = []
@@ -802,6 +846,16 @@ class ArticleScraper:
                 logging.info(f"Progress: {processed}/{total} URLs processed.")
                 
         return batch_results
+
+    def _should_skip_url(self, url):
+        """Skip URLs that are very likely to timeout"""
+        # Skip very long Google News URLs
+        if 'news.google.com/rss/articles/CBMi' in url and len(url) > 350:
+            return True
+        # Skip social media
+        if any(domain in url.lower() for domain in ['facebook.com', 'twitter.com', 'instagram.com', 'youtube.com']):
+            return True
+        return False    
 
     def quit(self):
         # No persistent driver exists in this process-based approach
@@ -842,7 +896,7 @@ if __name__ == '__main__':
     
     print("🧪 Testing ArticleScraper with sample URLs...")
     
-    scraper = ArticleScraper(parallelism=1, process_timeout=60)
+    scraper = ArticleScraper(parallelism=1, process_timeout=30)
     articles = scraper.getArticles(test_urls)
     
     print(f"\n📊 Test Results:")
