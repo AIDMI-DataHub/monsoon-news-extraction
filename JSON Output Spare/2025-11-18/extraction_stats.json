@@ -1,0 +1,37 @@
+{
+  "extraction_date": "2025-11-18",
+  "total_articles": 5,
+  "language_stats": {
+    "total_articles": 5,
+    "language_distribution": {
+      "ta": {
+        "count": 2,
+        "percentage": 40.0
+      },
+      "en": {
+        "count": 2,
+        "percentage": 40.0
+      },
+      "hi": {
+        "count": 1,
+        "percentage": 20.0
+      }
+    }
+  },
+  "quality_breakdown": {
+    "high": 4,
+    "medium": 1,
+    "low": 0
+  },
+  "region_breakdown": {
+    "puducherry": 1,
+    "andaman-and-nicobar-islands": 1,
+    "delhi": 1,
+    "west-bengal": 1,
+    "tamil-nadu": 1
+  },
+  "disaster_breakdown": {
+    "Monsoon": 5
+  },
+  "extraction_timestamp": "2025-11-18 11:02:11"
+}
