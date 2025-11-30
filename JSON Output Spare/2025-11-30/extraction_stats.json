@@ -1,0 +1,54 @@
+{
+  "extraction_date": "2025-11-30",
+  "total_articles": 10,
+  "language_stats": {
+    "total_articles": 10,
+    "language_distribution": {
+      "en": {
+        "count": 4,
+        "percentage": 40.0
+      },
+      "ta": {
+        "count": 1,
+        "percentage": 10.0
+      },
+      "hi": {
+        "count": 2,
+        "percentage": 20.0
+      },
+      "bn": {
+        "count": 1,
+        "percentage": 10.0
+      },
+      "pa": {
+        "count": 1,
+        "percentage": 10.0
+      },
+      "ml": {
+        "count": 1,
+        "percentage": 10.0
+      }
+    }
+  },
+  "quality_breakdown": {
+    "high": 7,
+    "medium": 3,
+    "low": 0
+  },
+  "region_breakdown": {
+    "puducherry": 1,
+    "gujarat": 1,
+    "andhra-pradesh": 1,
+    "telangana": 1,
+    "tamil-nadu": 1,
+    "uttar-pradesh": 1,
+    "assam": 1,
+    "punjab": 1,
+    "madhya-pradesh": 1,
+    "kerala": 1
+  },
+  "disaster_breakdown": {
+    "Monsoon": 10
+  },
+  "extraction_timestamp": "2025-11-30 11:04:13"
+}
