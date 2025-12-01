@@ -1,0 +1,38 @@
+{
+  "extraction_date": "2025-12-01",
+  "total_articles": 6,
+  "language_stats": {
+    "total_articles": 6,
+    "language_distribution": {
+      "hi": {
+        "count": 3,
+        "percentage": 50.0
+      },
+      "gu": {
+        "count": 1,
+        "percentage": 16.67
+      },
+      "en": {
+        "count": 2,
+        "percentage": 33.33
+      }
+    }
+  },
+  "quality_breakdown": {
+    "high": 4,
+    "medium": 2,
+    "low": 0
+  },
+  "region_breakdown": {
+    "chandigarh": 1,
+    "gujarat": 1,
+    "haryana": 1,
+    "tamil-nadu": 1,
+    "maharashtra": 1,
+    "uttarakhand": 1
+  },
+  "disaster_breakdown": {
+    "Monsoon": 6
+  },
+  "extraction_timestamp": "2025-12-01 11:11:21"
+}
