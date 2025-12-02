@@ -1,0 +1,35 @@
+{
+  "extraction_date": "2025-12-02",
+  "total_articles": 3,
+  "language_stats": {
+    "total_articles": 3,
+    "language_distribution": {
+      "en": {
+        "count": 1,
+        "percentage": 33.33
+      },
+      "bn": {
+        "count": 1,
+        "percentage": 33.33
+      },
+      "hi": {
+        "count": 1,
+        "percentage": 33.33
+      }
+    }
+  },
+  "quality_breakdown": {
+    "high": 3,
+    "medium": 0,
+    "low": 0
+  },
+  "region_breakdown": {
+    "andhra-pradesh": 1,
+    "west-bengal": 1,
+    "uttar-pradesh": 1
+  },
+  "disaster_breakdown": {
+    "Monsoon": 3
+  },
+  "extraction_timestamp": "2025-12-02 11:02:14"
+}
