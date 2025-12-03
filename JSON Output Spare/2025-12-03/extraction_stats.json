@@ -1,0 +1,33 @@
+{
+  "extraction_date": "2025-12-03",
+  "total_articles": 5,
+  "language_stats": {
+    "total_articles": 5,
+    "language_distribution": {
+      "hi": {
+        "count": 3,
+        "percentage": 60.0
+      },
+      "en": {
+        "count": 2,
+        "percentage": 40.0
+      }
+    }
+  },
+  "quality_breakdown": {
+    "high": 4,
+    "medium": 1,
+    "low": 0
+  },
+  "region_breakdown": {
+    "delhi": 1,
+    "andhra-pradesh": 1,
+    "tamil-nadu": 1,
+    "madhya-pradesh": 1,
+    "jharkhand": 1
+  },
+  "disaster_breakdown": {
+    "Monsoon": 5
+  },
+  "extraction_timestamp": "2025-12-03 11:04:23"
+}
