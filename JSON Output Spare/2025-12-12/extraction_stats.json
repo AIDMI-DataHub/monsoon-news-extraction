@@ -1,0 +1,25 @@
+{
+  "extraction_date": "2025-12-12",
+  "total_articles": 1,
+  "language_stats": {
+    "total_articles": 1,
+    "language_distribution": {
+      "en": {
+        "count": 1,
+        "percentage": 100.0
+      }
+    }
+  },
+  "quality_breakdown": {
+    "high": 0,
+    "medium": 0,
+    "low": 1
+  },
+  "region_breakdown": {
+    "chandigarh": 1
+  },
+  "disaster_breakdown": {
+    "Monsoon": 1
+  },
+  "extraction_timestamp": "2025-12-12 11:03:02"
+}
