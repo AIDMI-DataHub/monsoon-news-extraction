@@ -1,0 +1,31 @@
+{
+  "extraction_date": "2026-02-21",
+  "total_articles": 3,
+  "language_stats": {
+    "total_articles": 3,
+    "language_distribution": {
+      "hi": {
+        "count": 2,
+        "percentage": 66.67
+      },
+      "en": {
+        "count": 1,
+        "percentage": 33.33
+      }
+    }
+  },
+  "quality_breakdown": {
+    "high": 0,
+    "medium": 3,
+    "low": 0
+  },
+  "region_breakdown": {
+    "delhi": 1,
+    "himachal-pradesh": 1,
+    "kerala": 1
+  },
+  "disaster_breakdown": {
+    "Monsoon": 3
+  },
+  "extraction_timestamp": "2026-02-21 11:20:29"
+}
