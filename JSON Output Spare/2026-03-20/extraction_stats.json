@@ -1,0 +1,26 @@
+{
+  "extraction_date": "2026-03-20",
+  "total_articles": 3,
+  "language_stats": {
+    "total_articles": 3,
+    "language_distribution": {
+      "hi": {
+        "count": 3,
+        "percentage": 100.0
+      }
+    }
+  },
+  "quality_breakdown": {
+    "high": 3,
+    "medium": 0,
+    "low": 0
+  },
+  "region_breakdown": {
+    "delhi": 2,
+    "chhattisgarh": 1
+  },
+  "disaster_breakdown": {
+    "Monsoon": 3
+  },
+  "extraction_timestamp": "2026-03-20 11:32:09"
+}
