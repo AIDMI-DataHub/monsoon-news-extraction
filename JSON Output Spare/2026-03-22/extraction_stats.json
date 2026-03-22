@@ -1,0 +1,27 @@
+{
+  "extraction_date": "2026-03-22",
+  "total_articles": 3,
+  "language_stats": {
+    "total_articles": 3,
+    "language_distribution": {
+      "en": {
+        "count": 3,
+        "percentage": 100.0
+      }
+    }
+  },
+  "quality_breakdown": {
+    "high": 3,
+    "medium": 0,
+    "low": 0
+  },
+  "region_breakdown": {
+    "sikkim": 1,
+    "odisha": 1,
+    "west-bengal": 1
+  },
+  "disaster_breakdown": {
+    "Monsoon": 3
+  },
+  "extraction_timestamp": "2026-03-22 11:31:24"
+}
