@@ -1,0 +1,34 @@
+{
+  "extraction_date": "2026-03-31",
+  "total_articles": 6,
+  "language_stats": {
+    "total_articles": 6,
+    "language_distribution": {
+      "hi": {
+        "count": 3,
+        "percentage": 50.0
+      },
+      "en": {
+        "count": 3,
+        "percentage": 50.0
+      }
+    }
+  },
+  "quality_breakdown": {
+    "high": 3,
+    "medium": 3,
+    "low": 0
+  },
+  "region_breakdown": {
+    "delhi": 1,
+    "sikkim": 1,
+    "haryana": 1,
+    "kerala": 1,
+    "maharashtra": 1,
+    "arunachal-pradesh": 1
+  },
+  "disaster_breakdown": {
+    "Monsoon": 6
+  },
+  "extraction_timestamp": "2026-03-31 11:56:22"
+}
