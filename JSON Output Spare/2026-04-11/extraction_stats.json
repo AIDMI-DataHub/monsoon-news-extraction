@@ -1,0 +1,30 @@
+{
+  "extraction_date": "2026-04-11",
+  "total_articles": 2,
+  "language_stats": {
+    "total_articles": 2,
+    "language_distribution": {
+      "ml": {
+        "count": 1,
+        "percentage": 50.0
+      },
+      "en": {
+        "count": 1,
+        "percentage": 50.0
+      }
+    }
+  },
+  "quality_breakdown": {
+    "high": 0,
+    "medium": 2,
+    "low": 0
+  },
+  "region_breakdown": {
+    "kerala": 1,
+    "karnataka": 1
+  },
+  "disaster_breakdown": {
+    "Monsoon": 2
+  },
+  "extraction_timestamp": "2026-04-11 11:39:11"
+}
