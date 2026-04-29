@@ -1,0 +1,33 @@
+{
+  "extraction_date": "2026-04-29",
+  "total_articles": 5,
+  "language_stats": {
+    "total_articles": 5,
+    "language_distribution": {
+      "hi": {
+        "count": 2,
+        "percentage": 40.0
+      },
+      "en": {
+        "count": 3,
+        "percentage": 60.0
+      }
+    }
+  },
+  "quality_breakdown": {
+    "high": 3,
+    "medium": 2,
+    "low": 0
+  },
+  "region_breakdown": {
+    "delhi": 1,
+    "chhattisgarh": 1,
+    "mizoram": 1,
+    "kerala": 1,
+    "odisha": 1
+  },
+  "disaster_breakdown": {
+    "Monsoon": 5
+  },
+  "extraction_timestamp": "2026-04-29 13:02:42"
+}
