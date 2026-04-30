@@ -1,0 +1,42 @@
+{
+  "extraction_date": "2026-04-30",
+  "total_articles": 7,
+  "language_stats": {
+    "total_articles": 7,
+    "language_distribution": {
+      "en": {
+        "count": 4,
+        "percentage": 57.14
+      },
+      "bn": {
+        "count": 1,
+        "percentage": 14.29
+      },
+      "ml": {
+        "count": 1,
+        "percentage": 14.29
+      },
+      "ta": {
+        "count": 1,
+        "percentage": 14.29
+      }
+    }
+  },
+  "quality_breakdown": {
+    "high": 4,
+    "medium": 3,
+    "low": 0
+  },
+  "region_breakdown": {
+    "nagaland": 1,
+    "west-bengal": 2,
+    "kerala": 1,
+    "tamil-nadu": 1,
+    "karnataka": 1,
+    "tripura": 1
+  },
+  "disaster_breakdown": {
+    "Monsoon": 7
+  },
+  "extraction_timestamp": "2026-04-30 13:14:02"
+}
