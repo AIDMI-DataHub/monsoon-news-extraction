@@ -1,0 +1,37 @@
+{
+  "extraction_date": "2026-05-12",
+  "total_articles": 5,
+  "language_stats": {
+    "total_articles": 5,
+    "language_distribution": {
+      "bn": {
+        "count": 1,
+        "percentage": 20.0
+      },
+      "en": {
+        "count": 3,
+        "percentage": 60.0
+      },
+      "hi": {
+        "count": 1,
+        "percentage": 20.0
+      }
+    }
+  },
+  "quality_breakdown": {
+    "high": 4,
+    "medium": 0,
+    "low": 1
+  },
+  "region_breakdown": {
+    "west-bengal": 1,
+    "kerala": 1,
+    "assam": 1,
+    "tamil-nadu": 1,
+    "karnataka": 1
+  },
+  "disaster_breakdown": {
+    "Monsoon": 5
+  },
+  "extraction_timestamp": "2026-05-12 13:24:38"
+}
