@@ -1,0 +1,35 @@
+{
+  "extraction_date": "2026-05-21",
+  "total_articles": 8,
+  "language_stats": {
+    "total_articles": 8,
+    "language_distribution": {
+      "en": {
+        "count": 7,
+        "percentage": 87.5
+      },
+      "ta": {
+        "count": 1,
+        "percentage": 12.5
+      }
+    }
+  },
+  "quality_breakdown": {
+    "high": 4,
+    "medium": 1,
+    "low": 3
+  },
+  "region_breakdown": {
+    "tripura": 1,
+    "himachal-pradesh": 1,
+    "tamil-nadu": 1,
+    "telangana": 1,
+    "karnataka": 2,
+    "jammu-and-kashmir": 1,
+    "delhi": 1
+  },
+  "disaster_breakdown": {
+    "Monsoon": 8
+  },
+  "extraction_timestamp": "2026-05-21 14:13:19"
+}
