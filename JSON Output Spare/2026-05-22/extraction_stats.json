@@ -1,0 +1,33 @@
+{
+  "extraction_date": "2026-05-22",
+  "total_articles": 5,
+  "language_stats": {
+    "total_articles": 5,
+    "language_distribution": {
+      "en": {
+        "count": 3,
+        "percentage": 60.0
+      },
+      "hi": {
+        "count": 2,
+        "percentage": 40.0
+      }
+    }
+  },
+  "quality_breakdown": {
+    "high": 5,
+    "medium": 0,
+    "low": 0
+  },
+  "region_breakdown": {
+    "sikkim": 1,
+    "jharkhand": 1,
+    "uttar-pradesh": 1,
+    "chandigarh": 1,
+    "jammu-and-kashmir": 1
+  },
+  "disaster_breakdown": {
+    "Monsoon": 5
+  },
+  "extraction_timestamp": "2026-05-22 14:03:00"
+}
