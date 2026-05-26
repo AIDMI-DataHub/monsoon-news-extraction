@@ -1,0 +1,45 @@
+{
+  "extraction_date": "2026-05-26",
+  "total_articles": 10,
+  "language_stats": {
+    "total_articles": 10,
+    "language_distribution": {
+      "hi": {
+        "count": 4,
+        "percentage": 40.0
+      },
+      "en": {
+        "count": 4,
+        "percentage": 40.0
+      },
+      "gu": {
+        "count": 1,
+        "percentage": 10.0
+      },
+      "bn": {
+        "count": 1,
+        "percentage": 10.0
+      }
+    }
+  },
+  "quality_breakdown": {
+    "high": 7,
+    "medium": 3,
+    "low": 0
+  },
+  "region_breakdown": {
+    "jharkhand": 1,
+    "mizoram": 1,
+    "gujarat": 1,
+    "himachal-pradesh": 2,
+    "arunachal-pradesh": 1,
+    "tamil-nadu": 1,
+    "west-bengal": 1,
+    "bihar": 1,
+    "andaman-and-nicobar-islands": 1
+  },
+  "disaster_breakdown": {
+    "Monsoon": 10
+  },
+  "extraction_timestamp": "2026-05-26 14:15:47"
+}
