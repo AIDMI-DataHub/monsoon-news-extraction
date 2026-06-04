@@ -1,0 +1,42 @@
+{
+  "extraction_date": "2026-06-04",
+  "total_articles": 14,
+  "language_stats": {
+    "total_articles": 14,
+    "language_distribution": {
+      "en": {
+        "count": 9,
+        "percentage": 64.29
+      },
+      "hi": {
+        "count": 4,
+        "percentage": 28.57
+      },
+      "gu": {
+        "count": 1,
+        "percentage": 7.14
+      }
+    }
+  },
+  "quality_breakdown": {
+    "high": 9,
+    "medium": 4,
+    "low": 1
+  },
+  "region_breakdown": {
+    "andaman-and-nicobar-islands": 1,
+    "jammu-and-kashmir": 2,
+    "kerala": 2,
+    "odisha": 1,
+    "maharashtra": 1,
+    "goa": 2,
+    "rajasthan": 1,
+    "telangana": 1,
+    "haryana": 2,
+    "gujarat": 1
+  },
+  "disaster_breakdown": {
+    "Monsoon": 14
+  },
+  "extraction_timestamp": "2026-06-04 14:43:21"
+}
