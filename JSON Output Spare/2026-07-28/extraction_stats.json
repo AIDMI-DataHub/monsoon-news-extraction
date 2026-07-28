@@ -1,0 +1,49 @@
+{
+  "extraction_date": "2026-07-28",
+  "total_articles": 22,
+  "language_stats": {
+    "total_articles": 22,
+    "language_distribution": {
+      "en": {
+        "count": 10,
+        "percentage": 45.45
+      },
+      "hi": {
+        "count": 11,
+        "percentage": 50.0
+      },
+      "gu": {
+        "count": 1,
+        "percentage": 4.55
+      }
+    }
+  },
+  "quality_breakdown": {
+    "high": 16,
+    "medium": 4,
+    "low": 2
+  },
+  "region_breakdown": {
+    "west-bengal": 1,
+    "odisha": 2,
+    "chhattisgarh": 3,
+    "madhya-pradesh": 1,
+    "uttar-pradesh": 1,
+    "tripura": 1,
+    "telangana": 1,
+    "nagaland": 1,
+    "gujarat": 1,
+    "meghalaya": 1,
+    "karnataka": 1,
+    "himachal-pradesh": 1,
+    "maharashtra": 1,
+    "jharkhand": 2,
+    "rajasthan": 2,
+    "delhi": 1,
+    "jammu-and-kashmir": 1
+  },
+  "disaster_breakdown": {
+    "Monsoon": 22
+  },
+  "extraction_timestamp": "2026-07-28 13:26:36"
+}
