@@ -1,0 +1,49 @@
+{
+  "extraction_date": "2026-09-29",
+  "total_articles": 16,
+  "language_stats": {
+    "total_articles": 16,
+    "language_distribution": {
+      "en": {
+        "count": 8,
+        "percentage": 50.0
+      },
+      "hi": {
+        "count": 4,
+        "percentage": 25.0
+      },
+      "bn": {
+        "count": 1,
+        "percentage": 6.25
+      },
+      "gu": {
+        "count": 3,
+        "percentage": 18.75
+      }
+    }
+  },
+  "quality_breakdown": {
+    "high": 9,
+    "medium": 6,
+    "low": 1
+  },
+  "region_breakdown": {
+    "ladakh": 1,
+    "delhi": 1,
+    "mizoram": 1,
+    "punjab": 1,
+    "tripura": 1,
+    "maharashtra": 1,
+    "rajasthan": 1,
+    "karnataka": 2,
+    "odisha": 1,
+    "gujarat": 3,
+    "bihar": 1,
+    "uttar-pradesh": 1,
+    "west-bengal": 1
+  },
+  "disaster_breakdown": {
+    "Monsoon": 16
+  },
+  "extraction_timestamp": "2026-09-29 16:52:00"
+}
