@@ -1,0 +1,44 @@
+[
+  {
+    "id": "49a38833aeb7d2ed1da5cf8992732c56",
+    "title": "Schools closed in Chennai and nearby districts amid northeast monsoon - NewsBytes",
+    "final_url": "https://www.newsbytesapp.com/news/india/schools-closed-in-chennai-and-nearby-districts-amid-northeast-monsoon/tldr",
+    "original_url": "https://news.google.com/rss/articles/CBMitAFBVV95cUxNLWNCTzg1bGwzajVZTDJ1M3FmRDNBU2dQcDR5Rzh0OUxsZmVFTU9Fa2hqSkhBUnAtWDFnVGs2V0I1dFh3Ym5mdVYwUGdfb2xWSTA1QWE5RE05dmlsaFduLUpHZXFsWXFQVjJmXzROb0RvQWpjaXlfWkU5eFNYbEh4cVEtWmNSRzdzUjRQWURiVVVoZkRycHZTUHVQazRSUU12U3Y5cEEzVWU0alBFV2hHenYwcms?oc=5",
+    "normalized_url": "https://www.newsbytesapp.com/news/india/schools-closed-in-chennai-and-nearby-districts-amid-northeast-monsoon/tldr",
+    "article_text": "The India Meteorological Department (IMD) has put out an orange alert for Chennai, warning of more heavy rainfall until October 26.\n\nThe downpour is linked to a low-pressure area over the Bay of Bengal.\n\nPeople are being urged to keep an eye on official weather updates since severe conditions could affect daily life across Tamil Nadu, Kerala, South Interior Karnataka, Lakshadweep, Karaikal, Mahe, and Puducherry.",
+    "article_language": "en",
+    "other_info": {
+      "csv_title": "Schools closed in Chennai and nearby districts amid northeast monsoon - NewsBytes",
+      "csv_source": "NewsBytes",
+      "csv_summary": "<a href=\"https://news.google.com/rss/articles/CBMitAFBVV95cUxNLWNCTzg1bGwzajVZTDJ1M3FmRDNBU2dQcDR5Rzh0OUxsZmVFTU9Fa2hqSkhBUnAtWDFnVGs2V0I1dFh3Ym5mdVYwUGdfb2xWSTA1QWE5RE05dmlsaFduLUpHZXFsWXFQVjJmXzROb0RvQWpjaXlfWkU5eFNYbEh4cVEtWmNSRzdzUjRQWURiVVVoZkRycHZTUHVQazRSUU12U3Y5cEEzVWU0alBFV2hHenYwcms?oc=5\" target=\"_blank\">Schools closed in Chennai and nearby districts amid northeast monsoon</a>&nbsp;&nbsp;<font color=\"#6f6f6f\">NewsBytes</font>",
+      "csv_date": "2026-10-21 07:51:24",
+      "csv_term": "Monsoon",
+      "csv_language_queried": "en"
+    },
+    "state": "lakshadweep",
+    "disaster_type": "Monsoon",
+    "extraction_timestamp": "2026-10-21 15:30:59",
+    "extraction_quality": "low"
+  },
+  {
+    "id": "0cb97b78d11e447f3760d8a67868e9ac",
+    "title": "Karnataka Monsoon 2026: Rainfall Deficit Hits 32% - News Karnataka",
+    "final_url": "https://newskarnataka.com/bengaluru/karnataka-monsoon-2026-rainfall-deficit-hits-32/21102026/",
+    "original_url": "https://news.google.com/rss/articles/CBMimAFBVV95cUxNWU4zMWhfUlVibUNRTE8yU0ZvMDU2YTZzbjQ1UFJkM20wSnF5SDhOOVdHZ1VoT01oMEVUU21Jb0duNV9UekgyTHYwSmkwQWp5UGN1OWo4cEV6TVROeVNYMVJya21saDFPQ1FkMXNEcFlZbzYwLWN3bDBiYzhKdjJYRjlUZHpKd3lQXzlZYzRZLVdSQnFJZEFBTw?oc=5",
+    "normalized_url": "https://newskarnataka.com/bengaluru/karnataka-monsoon-2026-rainfall-deficit-hits-32/21102026",
+    "article_text": "Between June 1 and September 30, Karnataka received 563.7 mm of rainfall against the normal 831.8 mm, according to IMD data. The 32% shortfall is the highest since 1918, when the region recorded a 47% rainfall deficit. Karnataka had recorded a 31% deficit in 2002 and an 18% deficit in 2023.",
+    "article_language": "en",
+    "other_info": {
+      "csv_title": "Karnataka Monsoon 2026: Rainfall Deficit Hits 32% - News Karnataka",
+      "csv_source": "News Karnataka",
+      "csv_summary": "<a href=\"https://news.google.com/rss/articles/CBMimAFBVV95cUxNWU4zMWhfUlVibUNRTE8yU0ZvMDU2YTZzbjQ1UFJkM20wSnF5SDhOOVdHZ1VoT01oMEVUU21Jb0duNV9UekgyTHYwSmkwQWp5UGN1OWo4cEV6TVROeVNYMVJya21saDFPQ1FkMXNEcFlZbzYwLWN3bDBiYzhKdjJYRjlUZHpKd3lQXzlZYzRZLVdSQnFJZEFBTw?oc=5\" target=\"_blank\">Karnataka Monsoon 2026: Rainfall Deficit Hits 32%</a>&nbsp;&nbsp;<font color=\"#6f6f6f\">News Karnataka</font>",
+      "csv_date": "2026-10-21 10:55:44",
+      "csv_term": "Monsoon",
+      "csv_language_queried": "en"
+    },
+    "state": "karnataka",
+    "disaster_type": "Monsoon",
+    "extraction_timestamp": "2026-10-21 16:03:09",
+    "extraction_quality": "low"
+  }
+]
