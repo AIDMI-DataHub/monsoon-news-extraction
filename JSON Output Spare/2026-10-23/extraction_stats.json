@@ -1,0 +1,47 @@
+{
+  "extraction_date": "2026-10-23",
+  "total_articles": 8,
+  "language_stats": {
+    "total_articles": 8,
+    "language_distribution": {
+      "en": {
+        "count": 4,
+        "percentage": 50.0
+      },
+      "hi": {
+        "count": 1,
+        "percentage": 12.5
+      },
+      "pa": {
+        "count": 1,
+        "percentage": 12.5
+      },
+      "gu": {
+        "count": 1,
+        "percentage": 12.5
+      },
+      "bn": {
+        "count": 1,
+        "percentage": 12.5
+      }
+    }
+  },
+  "quality_breakdown": {
+    "high": 3,
+    "medium": 3,
+    "low": 2
+  },
+  "region_breakdown": {
+    "puducherry": 1,
+    "delhi": 2,
+    "punjab": 1,
+    "kerala": 1,
+    "gujarat": 1,
+    "uttar-pradesh": 1,
+    "west-bengal": 1
+  },
+  "disaster_breakdown": {
+    "Monsoon": 8
+  },
+  "extraction_timestamp": "2026-10-23 15:29:31"
+}
